@@ -12,7 +12,7 @@ export class BDManager {
 
         return new Promise((resolve, reject) => {
             let tabela = [];
-            const caminho = `./bd/${origem}.csv`;
+            const caminho = `./banco_de_dados${origem}.csv`;
             
             // Se o arquivo não existir, o cria
             if (!fs.existsSync(caminho)) {
@@ -37,7 +37,7 @@ export class BDManager {
     static async publicarTabela(destino, tabela) {
 
         // Caminho do arquivo csv
-        const caminho = `./bd/${destino}.csv`
+        const caminho = `./banco_de_dados${destino}.csv`
 
         // Configura o escritor CSV
         const csvWriter = this.obterCsvWriter(destino, caminho);
@@ -118,7 +118,7 @@ export class BDManager {
     static async atualizarObjeto(tabela, obj) {
         // Ler o arquivo CSV
         const records = [];
-        fs.createReadStream(`./bd/${tabela}.csv`)
+        fs.createReadStream(`./banco_de_dados${tabela}.csv`)
             .pipe(csvParser())
             .on('data', (linha) => records.push(linha))
             .on('end', async () => {
@@ -137,7 +137,7 @@ export class BDManager {
                     const csvString = header + csvStringifier.stringifyRecords(records);
     
                     // Escrever o arquivo CSV novamente
-                    fs.writeFileSync(`./bd/${tabela}.csv`, csvString, 'utf8');
+                    fs.writeFileSync(`./banco_de_dados${tabela}.csv`, csvString, 'utf8');
                 } else {
                 }
             });
@@ -147,7 +147,7 @@ export class BDManager {
         // Configura o escritor CSV 
         if (tabela === 'funcionarios') {
             return createCsvWriter({
-                path: `./bd/${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },             // Coluna "ID"
                     { id: 'nome', title: 'nome' },         // Coluna "nome"
@@ -160,7 +160,7 @@ export class BDManager {
         }
         else if (tabela === 'clientes') 
             return createCsvWriter({
-                path: `./bd/${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                   // Coluna "ID"
                     { id: 'nome', title: 'nome' },               // Coluna "nome"
@@ -172,7 +172,7 @@ export class BDManager {
             });
         else if (tabela === 'quartos') 
             return createCsvWriter({
-                path: `./bd/${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                     // Coluna "id"
                     { id: 'nome', title: 'nome' },                 // Coluna "nome"
@@ -183,7 +183,7 @@ export class BDManager {
             });
         else if (tabela === 'reservas') 
             return createCsvWriter({
-                path: `./bd/${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                  // Coluna "id"
                     { id: 'id_cliente', title: 'idCliente' },   // Coluna "idCliente"
