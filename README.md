@@ -32,7 +32,6 @@ De modo que o package.json seja semelhante a
         "dependencies": {
             "csv-parser": "^3.2.0",
             "csv-writer": "^1.6.0",
-            "enquirer": "^2.4.1",
             "inquirer": "^12.4.2"
         }
     }
@@ -57,10 +56,3 @@ De modo que o package.json seja semelhante a
 - **classes.js**: Contém a definição das classes Funcionario, Cliente, Quarto e Reserva.
 - **BDConfig.js**: Contém a classe BDManager, que cuida de armazenar os dados do sistema em arquivos csv.
 - **funcoesAuxiliares.js**: Contém definições de classes auxiliares, com métodos estáticos, para serem usados principalmente na classe Sistema.
-
-## Features implementadas até o momento
-
-- Sistema de cadastro do usuário, com persistencia das informações em banco de dados local, em arquivo .cvs
-- Sistema de Login, com verificação real à base de dados, de usuários
-- Visualizar as informações de cadastro dos usuários, uma vez que logado no sistema
-- Opção de editar as informações de cadastro dos usuários, com devida alteração na base de dados.

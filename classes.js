@@ -31,9 +31,10 @@ export class Quarto {
 }
 
 export class Reserva {
-    constructor(id='', idCliente='', status='', entrada='', saida='') {
+    constructor(id='', idCliente='', nome='', status='', entrada='', saida='') {
         this.id = id;
         this.idCliente = idCliente;
+        this.nome = nome;
         this.status = status;
         this.entrada = entrada;
         this.saida = saida;

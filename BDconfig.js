@@ -1,4 +1,3 @@
-import { Cliente, Funcionario, Quarto, Reserva } from './classes.js';
 import fs from 'fs';
 import { createObjectCsvWriter as createCsvWriter, createObjectCsvStringifier } from 'csv-writer';
 import csvParserModule from 'csv-parser';
@@ -144,7 +143,8 @@ export class BDManager {
                 path: `./banco_de_dados/${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                  // Coluna "id"
-                    { id: 'id_cliente', title: 'idCliente' },   // Coluna "idCliente"
+                    { id: 'idCliente', title: 'idCliente' },   // Coluna "idCliente"
+                    { id: 'nome', title: 'nome' },              // Coluna "nome" (do quarto)
                     { id: 'status', title: 'status' },          // Coluna "status"
                     { id: 'entrada', title: 'entrada' },        // Coluna "entrada"
                     { id: 'saida', title: 'saida' },            // Coluna "saida
@@ -193,7 +193,8 @@ export class BDManager {
             return createObjectCsvStringifier({
                 header: [
                     { id: 'id', title: 'id' },
-                    { id: 'id_cliente', title: 'idCliente' },
+                    { id: 'idCliente', title: 'idCliente' },
+                    { id: 'nome', title: 'nome' },
                     { id: 'status', title: 'status' },
                     { id: 'entrada', title: 'entrada' },
                     { id: 'saida', title: 'saida' },
@@ -213,7 +214,7 @@ export class BDManager {
                 fs.writeFileSync(caminho, "id,nome,camas,preco,descricao\n", 'utf8');
                 break;
             case 'reservas':
-                fs.writeFileSync(caminho, "id,idCliente,status,entrada,saida\n", 'utf8');
+                fs.writeFileSync(caminho, "id,idCliente,quarto,status,entrada,saida\n", 'utf8');
                 break;
         }
     }

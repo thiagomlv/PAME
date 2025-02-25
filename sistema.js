@@ -1,13 +1,13 @@
 import inquirer from 'inquirer';
-import { Cabecalho, CPF, ValidarContaFuncionario, ValidarData, Formatar, ID, ValidarQuarto } from './funcoesAuxiliares.js';
+import { Cabecalho, CPF, ValidarContaFuncionario, ValidarData, Formatar, ID, ValidarQuarto, Encontrar } from './funcoesAuxiliares.js';
 import { BDManager } from './BDconfig.js';
 import { Cliente, Quarto, Funcionario, Reserva } from './classes.js';
 
 class Sistema {
 
     // Metodo inicial: é chamado para iniciar o sistema
-    iniciar() {
-        this.exibirTelaInicial();
+    async iniciar() {
+        await this.exibirTelaInicial();
     }
 
     async publicarDado(destino, objeto) {
@@ -26,14 +26,14 @@ class Sistema {
 
         console.clear() // Limpa o terminal
 
-        console.log('\n==================================================\n');
-        console.log('     ______         _                         ');
-        console.log('    |  ____|       | |                        ');
-        console.log('    | |__   _____  | |     _   _  __  __  ___      ');
-        console.log('    |  __| |_____| | |    | | | | \\ \\/ / / _ \\     ');
-        console.log('    | |            | |___ | |_| |  >  < | (_) |    ');
-        console.log('    |_|            |_____| \\___/  /_/\\_\\ \\___/     \n');
-        console.log('                                         HOTEL');  
+        console.log('\n'+'='.repeat(70)+'\n');
+        console.log('               ______         _                                   ');
+        console.log('              |  ____|       | |                                  ');
+        console.log('              | |__   _____  | |     _   _  __  __  ___                ');
+        console.log('              |  __| |_____| | |    | | | | \\ \\/ / / _ \\              ');
+        console.log('              | |            | |___ | |_| |  >  < | (_) |              ');
+        console.log('              |_|            |_____| \\___/  /_/\\_\\ \\___/               \n');
+        console.log('                                                   HOTEL          ');  
         
         Cabecalho.exibir('BEM-VINDO');
         
@@ -49,11 +49,14 @@ class Sistema {
                     type:  'list',
                     name: 'tipoDeUsuario',
                     message: 'Entrar como:\n',
-                    choices:['Funcionario', 'Cliente'],
+                    choices:['Funcionario', 'Cliente', 'Sair do programa'],
                 }
             ],)
             .then(async (answers) => {
-                await this.selecionarModoDeEntrada(answers.tipoDeUsuario); // Chama a funcao para selecionar modo de entrada
+                if (answers.tipoDeUsuario === 'Funcionario' || answers.tipoDeUsuario === 'Cliente') {
+                    await this.selecionarModoDeEntrada(answers.tipoDeUsuario); // Chama a funcao para selecionar modo de entrada
+                }
+                else await this.fechar();
             })
             .catch((error) => {
                 if (error.name === 'ExitPromptError') console.log('\nO usuário forçou o fechamento do aplicativo.');
@@ -78,8 +81,9 @@ class Sistema {
                 }
             ],)
             .then(async (answers) => {
-                if (answers.modoDeEntrada === 'Entrar na minha conta')
+                if (answers.modoDeEntrada === 'Entrar na minha conta') {
                     await this.acessarConta(tipoDeUsuario);
+                }
                 else if ((answers.modoDeEntrada === 'Criar uma conta'))
                     await this.criarConta(tipoDeUsuario);
                 else {
@@ -102,13 +106,10 @@ class Sistema {
     async acessarConta(tipoDeUsuario) {
 
         let matchFlag = false; // Diz se a senha corresponde a cadastrada no sistema 
-        let tabela = (tipoDeUsuario === 'Funcionarios') ? await BDManager.obterTabela('funcionarios') : await BDManager.obterTabela('clientes'); // Pega os dados mais recentes do banco de dados
-        
+        let tabela = this.obterTabela(tipoDeUsuario);  
         let cpfsCadastrados = [];
         for (let i = 0; i < tabela.length; i++) {
             cpfsCadastrados.push(tabela[i].cpf);
-            console.log(cpfsCadastrados);
-            await this.esperar(1);
         }
 
         while (true) {
@@ -162,9 +163,10 @@ class Sistema {
         if (tipoDeUsuario === 'Funcionario') {
 
             let funcionario = new Funcionario; // Instancia um novo objeto Funcionario
+            let tabela = await BDManager.obterTabela('funcionarios'); // Pega os dados mais recentes do banco de dados
             let ids = [];
-            for (let i=0; i < tabela.length; i++) listaIds.push(tabela[i].id);
-            dados.id = ID.gerar('F', ids); // Atribuindo um id
+            for (let i=0; i < tabela.length; i++) ids.push(tabela[i].id);
+            funcionario.id = ID.gerar('F', ids); // Atribuindo um id
 
             // Formulario de criacao de conta
             while (true) {
@@ -203,8 +205,7 @@ class Sistema {
             let cliente = new Cliente(); // instancia um cliente
             let tabela = await BDManager.obterTabela('clientes'); // Pega os dados mais recentes do banco de dados
             let ids = [];
-            for (let i=0; i < tabela.length; i++) listaIds.push(tabela[i].id);
-            
+            for (let i=0; i < tabela.length; i++) ids.push(tabela[i].id); 
             cliente.id = ID.gerar('C', ids); // Atribuindo um id
 
             // Formulario de criacao de conta
@@ -362,7 +363,6 @@ class Sistema {
         let tabela = this.obterTabela(tipoDeUsuario); // Pega a versao mais recente da tabela no banco de dados
         let usuariosCadastrados = [];
         for (let i=0; i < tabela.length; i++) usuariosCadastrados.push(tabela[i].id);
-
         
         while (true) {
             try {
@@ -554,7 +554,6 @@ class Sistema {
             try {
                 // Limpar o terminal
                 console.clear()
-
                 // Exibicao do cabecalho se o usuario for um funcionario
                 Cabecalho.exibir(`ADICIONAR QUARTO`)
 
@@ -635,16 +634,24 @@ class Sistema {
                 // Exibe a pergunta no terminal e coleta a resposta
                 const answers = await inquirer.prompt([
                     {
-                      type: 'imput',
-                      name: 'preco',
-                      message: 'Preco por noite (decimais separados por ponto):\n',
-                    },   
+                        type: 'imput',
+                        name: 'preco',
+                        message: 'Preco por noite (decimais separados por ponto): ',
+                        transformer: (input) => {
+                            return Formatar.preco(input); // Exibe o nome formatado enquanto o usuário digita
+                            },
+                        validate: (input) => {
+                            if ( ! Formatar.contemApenasNumeros(input) ) return '\nPreco deve conter apenas numeros.';
+                            return true;
+                        },
+                    },
+                      
                 ]);
 
                 let confirmacao = await this.confirmarDados('preco por noite'); // Confirmacao
 
                 if (confirmacao === 'Confirmar') {
-                    quarto.preco = answers.preco; // Atribui o valor ao objeto
+                    quarto.preco = Formatar.preco(answers.preco); // Atribui o valor ao objeto
                     return true; // Retorna true de a opcao de confirmacao foi 'Confirmar'
                 } else if (confirmacao === 'Editar') {
                     continue; // Reinicia o loop se foi 'Editar'
@@ -669,9 +676,12 @@ class Sistema {
                 // Exibe a pergunta no terminal e coleta a resposta
                 const answers = await inquirer.prompt([
                     {
-                      type: 'imput',
-                      name: 'descricao',
-                      message: 'Descricao do quarto:\n',
+                        type: 'imput',
+                        name: 'descricao',
+                        message: 'Descricao do quarto: ',
+                        transformer: (input) => {
+                            return Formatar.frase(input); // Exibe o nome formatado enquanto o usuário digita
+                        },
                     },   
                 ]);
 
@@ -684,6 +694,64 @@ class Sistema {
                     continue; // Reinicia o loop se foi 'Editar'
                 } else {
                     return false; // Opcao: voltar ao menu inicial
+                }
+
+            } 
+            catch (error) {
+                console.error(`Erro: ${error.message}`);
+            }
+        }
+    }
+
+    // Campo: Data de nascimento
+    async perguntarData(reserva, caso) {
+        while (true) {
+            try {
+                console.clear(); // Limpa o terminal
+                Cabecalho.exibir(`FAZER RESERVA - ${caso.toUpperCase()}`); // Exibicao do cabecalho se o usuario for um funcionario
+
+                let data;
+
+                // Exibe a pergunta no terminal e coleta a resposta
+                const answers = await inquirer.prompt([
+                    {
+                      type: 'list',
+                      name: 'ano',
+                      message: `Selecione o ano de ${caso}:\n`,
+                      choices: ValidarData.anosReserva,
+                    },
+                    {
+                      type: 'list',
+                      name: 'mes',
+                      message: `Selecione o mes de ${caso}:\n`,
+                      choices: ValidarData.meses,
+                    },
+                ]);
+
+                const answer = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'dia',
+                        message: `Selecione o dia de ${caso}:\n` ,
+                        choices: ValidarData.obterDiasDoMes(answers.mes, answers.ano),
+                    }
+                ])
+
+                // Confirmar dados
+                let confirmacao = await this.confirmarDados(`data de ${caso}`);
+
+                if (confirmacao === 'Confirmar') {
+                    data = `${answer.dia}/${ValidarData.formatar(answers.mes)}/${answers.ano}`
+                    if (caso === 'entrada') reserva.entrada = data; 
+                    else reserva.saida = data; 
+
+                    return true; // sai do loop se o usuario confirmou a data
+                }
+                else if (confirmacao === 'Editar'){
+                    continue; // continua no loop se o usuario quer editar a data
+                }
+                else {
+                    return false; // voltar para menu inicial
                 }
 
             } 
@@ -715,122 +783,6 @@ class Sistema {
             } catch (error) {
                 console.error(`Erro: ${error}`);
             }
-        }
-    }
-
-
-    /*
-    ============================================================================
-    ============================================================================
-    METODOS DE USUARIOS LOGADO
-    ============================================================================
-    ============================================================================
-    */
-
-
-    async menuFuncionarioLogado(usuario) {
-        try {
-            console.clear();// Limpar o terminal
-            Cabecalho.areaUsuario(usuario.nome); // Exibicao do cabecalho se o usuario for um funcionario
-            const opcoes = [ // Opcoes do menu
-                'Ver meus dados', 
-                'Ver lista de reservas', 
-                'Ver lista de quartos', 
-                'Ver lista de clientes',
-                'Mudar status da reserva',
-                'Adicionar quarto',
-                'Sair'
-            ];
-
-            // Exibe a pergunta no terminal e coleta a resposta
-            let answers = await inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'op',
-                    message: 'Selecione uma opcao:\n',
-                    choices: opcoes,
-                },
-            ]);
-
-            if (answers.op === opcoes[0]) {
-                await this.visualizarDados(usuario, 'Funcionario');
-            }
-            else if (answers.op === opcoes[1]){
-                //this.listarReservas();
-            }
-            else if (answers.op === opcoes[2]){
-                //this.listarQuartos();
-            }
-            else if (answers.op === opcoes[3]){
-                //this.listarClientes();
-            }
-            else if (answers.op === opcoes[4]){
-                //this.mudarStatusReserva();
-            }
-            else if (answers.op === opcoes[5]){
-                await this.adicionarQuarto();
-            }
-            else if (answers.op === opcoes[6]){
-                await this.exibirTelaInicial();
-            }
-            else {
-                throw new Error('Erro inesperado.')
-            }
-        } catch (error) { 
-            console.error(`Erro: ${error.message}`);
-        }
-    }
-
-    // Primeiro menu que o cliente acessa quando loga
-    async menuClienteLogado(usuario) {
-        try {
-            console.clear();// Limpar o terminal
-            Cabecalho.areaUsuario(usuario.nome); // Exibicao do cabecalho se o usuario for um funcionario
-            const opcoes = [ // Opcoes do menu
-                'Ver meus dados', 
-                'Ver lista de quartos', 
-                'Fazer reserva', 
-                'Cancelar reserva',
-                'Ver minhas reservas',
-                'Sair'
-            ];
-
-            // Exibe a pergunta no terminal e coleta a resposta
-            let answers = await inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'op',
-                    message: 'Selecione uma opcao:\n',
-                    choices: opcoes,
-                },
-            ]);
-
-            if (answers.op === opcoes[0]) {
-                await this.visualizarDados(usuario, 'Cliente');
-            }
-            else if (answers.op === opcoes[1]){
-                //this.listarQuartos();
-            }
-            else if (answers.op === opcoes[2]){
-                //this.fazerReserva(usuarioObj, quartoObj, reservasLista);
-            }
-            else if (answers.op === opcoes[3]){
-                //this.cancelar reservar(reserva, reservasList);
-            }
-            else if (answers.op === opcoes[4]){
-                //this.mudarStatusReserva();
-            }
-            else if (answers.op === opcoes[4]){
-                //this.listarReservas(Usuario);
-            }
-            else if (answers.op === opcoes[5]){
-                await this.exibirTelaInicial(); // Volta pra tela inicial
-            }
-            else {
-                throw new Error('Erro inesperado.')
-            }
-        } catch (error) { 
-            console.error(`Erro: ${error.message}`);
         }
     }
 
@@ -881,6 +833,119 @@ class Sistema {
         }
     }
 
+
+    /*
+    ============================================================================
+    ============================================================================
+    METODOS DE USUARIOS LOGADO
+    ============================================================================
+    ============================================================================
+    */
+
+
+    async menuFuncionarioLogado(usuario) {
+        try {
+            console.clear();// Limpar o terminal
+            Cabecalho.areaUsuario(usuario.nome); // Exibicao do cabecalho se o usuario for um funcionario
+            const opcoes = [ // Opcoes do menu
+                'Ver meus dados', 
+                'Ver lista de reservas', 
+                'Ver lista de quartos', 
+                'Ver lista de clientes',
+                'Mudar status da reserva',
+                'Adicionar quarto',
+                'Sair'
+            ];
+
+            // Exibe a pergunta no terminal e coleta a resposta
+            let answers = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'op',
+                    message: 'Selecione uma opcao:\n',
+                    choices: opcoes,
+                },
+            ]);
+
+            if (answers.op === opcoes[0]) {
+                await this.visualizarDados(usuario, 'Funcionario');
+            }
+            else if (answers.op === opcoes[1]){
+                await this.listarReservas('Funcionario', usuario);
+            }
+            else if (answers.op === opcoes[2]){
+                await this.listarQuartos('Funcionario', usuario);
+            }
+            else if (answers.op === opcoes[3]){
+                await this.listarClientes('Funcionario', usuario);
+            }
+            else if (answers.op === opcoes[4]){
+                await this.alterarStatusReserva(usuario);
+            }
+            else if (answers.op === opcoes[5]){
+                await this.adicionarQuarto(usuario);
+            }
+            else if (answers.op === opcoes[6]){
+                await this.exibirTelaInicial();
+            }
+            else {
+                throw new Error('Erro inesperado.')
+            }
+        } catch (error) { 
+            console.error(`Erro: ${error.message}`);
+        }
+    }
+
+    // Primeiro menu que o cliente acessa quando loga
+    async menuClienteLogado(usuario) {
+        try {
+            console.clear();// Limpar o terminal
+            Cabecalho.areaUsuario(usuario.nome); // Exibicao do cabecalho se o usuario for um funcionario
+            const opcoes = [ // Opcoes do menu
+                'Ver meus dados', 
+                'Ver lista de quartos', 
+                'Fazer reserva', 
+                'Cancelar reserva',
+                'Ver minhas reservas',
+                'Sair'
+            ];
+
+            // Exibe a pergunta no terminal e coleta a resposta
+            let answers = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'op',
+                    message: 'Selecione uma opcao:\n',
+                    choices: opcoes,
+                },
+            ]);
+
+            if (answers.op === opcoes[0]) {
+                await this.visualizarDados(usuario, 'Cliente');
+            }
+            else if (answers.op === opcoes[1]){
+                await this.listarQuartos('Cliente', usuario);
+            }
+            else if (answers.op === opcoes[2]){
+                await this.fazerReserva(usuario);
+            }
+            else if (answers.op === opcoes[3]){
+                await this.cancelarReserva(usuario);
+            }
+            else if (answers.op === opcoes[4]){
+                await this.listarReservasDoUsuario(usuario);
+            }
+            else if (answers.op === opcoes[5]){
+                await this.exibirTelaInicial(); // Volta pra tela inicial
+            }
+            else {
+                throw new Error('Erro inesperado.')
+            }
+        } catch (error) { 
+            console.error(`Erro: ${error.message}`);
+        }
+    }
+
     // Editar dados de um usuario
     async menuSelecionarDadoUsuario(usuario, tipoDeUsuario) {
         try {
@@ -897,8 +962,8 @@ class Sistema {
             }
             else {
                 console.log(`Nome: ${usuario.nome}`);
-                console.log(`CPF: ${usuario.cpf}`);
-                console.log(`Nascimento: ${Formatar.cpf(usuario.cpf)}`);
+                console.log(`CPF: ${Formatar.cpf(usuario.cpf)}`);
+                console.log(`Nascimento: ${usuario.nascimento}`);
                 console.log(`Email: ${usuario.email}`);
                 console.log('Senha: ' + '*'.repeat(usuario.senha.length));
             }
@@ -932,7 +997,7 @@ class Sistema {
                                     (tipoDeUsuario === 'Funcionario') ? await this.menuFuncionarioLogado(usuario) : await this.menuClienteLogado(usuario);
                                     break;
                                 }
-                            } else if (answers.op === 'Nascimento') {
+                            } else if (answers.op === 'Data de Nascimento') {
                                 if (!await this.perguntarNascimento(tipoDeUsuario, usuario)) {
                                     (tipoDeUsuario === 'Funcionario') ? await this.menuFuncionarioLogado(usuario) : await this.menuClienteLogado(usuario);
                                     break;
@@ -980,7 +1045,7 @@ class Sistema {
         let tabela = this.obterTabela('Quarto'); // Pega a versao mais recente da tabela no banco de dados
         let ids = [];
         for (let i=0; i < tabela.length; i++) {
-            listaIds.push(tabela[i].id);
+            ids.push(tabela[i].id);
         }
 
         quarto.id = ID.gerar('Q', ids);
@@ -1017,6 +1082,308 @@ class Sistema {
         if (sucesso) await this.menuFuncionarioLogado(usuario); // Ao terminar de criar conta vai para tela de login
     }
 
+    async listarQuartos(tipoDeUsuario, usuario) {
+        try {
+            let tabela = await this.obterTabela('Quarto'); // Pega a tabela de quartos
+
+            console.clear(); // Limpa o terminal
+            Cabecalho.exibirQuartos(tabela); // Exibe a lista de quartos
+
+            // Exibe a pergunta no terminal e coleta a resposta
+            let answers = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'op',
+                    message: 'Selecione uma opcao:\n',
+                    choices: ['Voltar para o menu inicial'],
+                },
+            ]);
+
+            if (answers.op === 'Voltar para o menu inicial') {
+                (tipoDeUsuario === 'Funcionario') ? await this.menuFuncionarioLogado(usuario) : await this.menuClienteLogado(usuario);
+            }
+            else {
+                throw new Error('Erro inesperado.')
+            }
+        } catch (error) { 
+            console.error(`Erro: ${error.message}`);
+        }
+    }
+
+    async listarClientes(tipoDeUsuario, usuario) {
+        try {
+            let tabela = await this.obterTabela('Cliente'); // Pega a tabela de quartos
+
+            console.clear(); // Limpa o terminal
+            Cabecalho.exibirClientes(tabela); // Exibe a lista de quartos
+
+            // Exibe a pergunta no terminal e coleta a resposta
+            let answers = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'op',
+                    message: 'Selecione uma opcao:\n',
+                    choices: ['Voltar para o menu inicial'],
+                },
+            ]);
+
+            if (answers.op === 'Voltar para o menu inicial') {
+                (tipoDeUsuario === 'Funcionario') ? await this.menuFuncionarioLogado(usuario) : await this.menuClienteLogado(usuario);
+            }
+            else {
+                throw new Error('Erro inesperado.')
+            }
+        } catch (error) { 
+            console.error(`Erro: ${error.message}`);
+        }
+    }
+
+    async listarReservas(tipoDeUsuario, usuario) {
+        try {
+            let tabela = await this.obterTabela('Reserva'); // Pega a tabela de reservas
+
+            console.clear(); // Limpa o terminal
+            await Cabecalho.exibirReservas(tabela); // Exibe a lista de reservas
+
+            // Exibe a pergunta no terminal e coleta a resposta
+            let answers = await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'op',
+                    message: 'Selecione uma opcao:\n',
+                    choices: ['Voltar para o menu inicial'],
+                },
+            ]);
+
+            if (answers.op === 'Voltar para o menu inicial') {
+                (tipoDeUsuario === 'Funcionario') ? await this.menuFuncionarioLogado(usuario) : await this.menuClienteLogado(usuario);
+            }
+            else {
+                throw new Error('Erro inesperado.')
+            }
+        } catch (error) { 
+            console.error(`Erro: ${error.message}`);
+        }
+    }
+
+    async listarReservasDoUsuario(usuario) {
+        try {
+            let tabela = await this.obterTabela('Reserva'); // Pega a tabela de reservas
+            let reservasUsuario = [];
+            for (let i=0;i<tabela.length;i++) {
+                if (tabela[i].idCliente == usuario.id) reservasUsuario.push(tabela[i])
+            }
+
+            console.clear(); // Limpa o terminal
+            await Cabecalho.exibirReservas(reservasUsuario); // Exibe a lista de reservas
+
+            if (reservasUsuario.length !== 0) {
+                // Exibe a pergunta no terminal e coleta a resposta
+                let answers = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'op',
+                        message: 'Selecione uma opcao:\n',
+                        choices: ['Voltar para o menu inicial'],
+                    },
+                ]);
+
+                if (answers.op === 'Voltar para o menu inicial') {
+                    await this.menuClienteLogado(usuario); // Volta pro menu inicial do usuario
+                }
+                else {
+                    throw new Error('Erro inesperado.')
+                }
+            }
+            else {
+                console.log(Cabecalho.ajustarEsquerda('Voltando para o menu inicial...'));
+                Cabecalho.exibirLinha(); 
+                await this.esperar(2000); // Espera 2 segundos
+
+                await this.menuClienteLogado(usuario); // Volta pro menu inicial
+            }
+        } catch (error) { 
+            console.error(`Erro: ${error.message}`);
+        }
+    }
+
+    // Cliente fazer reserva
+    async fazerReserva(usuario) {
+        console.clear() // Limpa o terminal
+        Cabecalho.exibir('FAZER RESERVA'); // Exibe o cabecalho
+
+        let reserva = new Reserva; // Instancia um novo objeto Reserva
+        let tabela = this.obterTabela('Reserva'); // Pega a versao mais recente da tabela no banco de dados
+        let ids = [];
+        for (let i=0; i < tabela.length; i++) {
+            ids.push(tabela[i].id);
+        }
+
+        reserva.id = ID.gerar('R', ids); // atribui um id a reserva
+        reserva.idCliente = usuario.id; // atribui o id do usuario a reserva
+
+        let sucesso = false;
+
+        // Formulario de criacao de conta
+        while (true) {
+            try {
+                if (!await this.perguntarData(reserva, 'entrada')) {
+                    await this.menuClienteLogado(usuario);
+                    break;
+                }
+                if (!await this.perguntarData(reserva, 'saida')) {
+                    await this.menuClienteLogado(usuario);
+                    break;
+                }
+                if (!await this.perguntarNomeQuarto(reserva)) {
+                    await this.menuClienteLogado(usuario);
+                    break;
+                }
+
+                reserva.status = 'Pendente';
+                await this.publicarDado('reservas', reserva);
+                sucesso = true;
+                break;
+            }
+            catch(err) {
+                console.log("Error: ", err);
+            }
+        }
+
+        if (sucesso) await this.menuClienteLogado(usuario); // Lista as reservas do usuario;
+    }
+
+    // Editar status de uma reserva
+    async alterarStatusReserva(usuario) {
+        while (true) {
+            try {
+                let tabela = await this.obterTabela('Reserva'); // Pega a tabela de reservas
+                
+                console.clear();// Limpar o terminal
+                await Cabecalho.exibirReservas(tabela);
+
+                if (tabela.length !== 0 && !(tabela[0])) {
+
+                    console.log('entrei no primerio if');
+                    await this.esperar(5000);
+
+                    let opcoes = [];
+                    for (let i=0; i<tabela.length; i++) {
+                        opcoes.push(tabela[i].id);
+                    }
+
+                    // Exibe a pergunta no terminal e coleta a resposta
+                    const answers = await inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'id',
+                            message: 'Selecione o ID da reserva a ser alterada:\n ',
+                            choices: opcoes,
+                        },
+                        {
+                            type: 'list',
+                            name: 'status',
+                            message: 'Selecione o novo status:\n',
+                            choices: ['Pendente', 'Adiada', 'Realizada', 'Cancelada'],
+                        },
+                    ])
+    
+                
+                    let confirmacao = await this.confirmarDados('status da reserva');
+        
+                    if (confirmacao === 'Confirmar') {
+                        let reserva = await Encontrar.objetoPorID('reservas', answers.id);
+                        reserva.status = answers.status; // Atualizada a reserva localmente
+                        await BDManager.atualizarObjeto('reservas', reserva); // Atualiza a reserva no banco de dados
+
+                        Cabecalho.exibir('Cancelando reserva...');
+
+                        await this.removerReservasCanceladas(); // Remove as reservas canceladas do banco de dados
+                        await this.menuFuncionarioLogado(usuario); // Vai pro menu inicial
+                    }
+                    else if (confirmacao === 'Editar') continue;
+                    else await this.menuFuncionarioLogado(usuario); // Vai pro menu inicial
+                }
+                else {
+                    console.log(Cabecalho.ajustarEsquerda('Voltando para o menu inicial...'));
+                    Cabecalho.exibirLinha(); 
+                    await this.esperar(2000); // Espera 2 segundos
+
+                    await this.menuFuncionarioLogado(usuario); // Volta pro menu inicial
+                    break;
+                }
+            }
+            catch (error) { 
+                console.error(`Erro: ${error.message}`);
+            }
+        }
+    }
+
+    // Editar status de uma reserva
+    async cancelarReserva(usuario) {
+        while (true) {
+            try {
+                let tabela = await this.obterTabela('Reserva'); // Pega a tabela de reservas
+                
+                console.clear();// Limpar o terminal
+                await Cabecalho.exibirReservas(tabela);
+                
+                let opcoes = [];
+                for (let i=0; i<tabela.length; i++) {
+                    if (tabela[i].status === 'Cancelada') continue;
+                    opcoes.push(tabela[i].id);
+                }
+    
+                if (opcoes.length !== 0) {
+                    // Exibe a pergunta no terminal e coleta a resposta
+                    const answers = await inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'id',
+                            message: 'Selecione o ID da reserva a ser cancelada:\n ',
+                            choices: opcoes,
+                        },
+                        {
+                            type: 'list',
+                            name: 'confirmacao',
+                            message: 'Confirmacao de cancelamento:\n',
+                            choices: ['Sim', 'Nao'],
+                        },
+                    ])
+        
+                    if (answers.confirmacao === 'Sim') {
+                        let reserva = await Encontrar.objetoPorID('reservas', answers.id); // Encontra o objeto com o ID selecionado
+                        reserva.status = 'Cancelada'; // Muda localmente o status para cancelado
+                        await BDManager.atualizarObjeto('reservas', reserva); // Atualiza o banco de dados
+                        Cabecalho.exibir('Cancelando reserva...');
+                        await this.removerReservasCanceladas(); // Remove as reservas canceladas do banco de dados;
+                        await this.esperar(3000);
+                        await this.menuClienteLogado(usuario); // Volta pro menu
+                    }
+                    else if (answers.confirmacao === 'Nao') await this.menuClienteLogado(usuario);
+                }
+                else {
+                    console.log(Cabecalho.ajustarEsquerda('Voltando para o menu inicial...'));
+                    Cabecalho.exibirLinha(); 
+                    await this.esperar(2000); // Espera 2 segundos
+
+                    await this.menuClienteLogado(usuario); // Volta pro menu inicial
+                    break;
+                }   
+            }
+            catch (error) { 
+                console.error(`Erro: ${error.message}`);
+            }
+        }
+    }
+
+    async removerReservasCanceladas() {
+        await this.esperar(3000); // Pausa de 3 segundos
+        let tabela = await this.obterTabela('Reserva');
+        let tabelaCorrigida = tabela.filter(obj => obj.status !== 'Cancelada');
+        BDManager.publicarTabela('reservas', tabelaCorrigida);
+    }
+
     // Retorna a tabela das classes
     async obterTabela(tabela) {
         if (tabela === 'Funcionario') return await BDManager.obterTabela('funcionarios');
@@ -1041,21 +1408,6 @@ class Sistema {
         return tabela[indice]; // retorna o objeto completo do usuario
     }
 
-    async encontrarObjetoPorID(classe, id) {
-
-        let tabela = await this.obterTabela(classe)
-        let indice = 0;
-
-        // Busca qual usuario tem o cpf desejado
-        for (let i=0; i < tabela.length; i++) {
-            if (id === tabela[i].id) {
-                indice = i;
-                break;
-            }
-        }
-        return tabela[indice]; // retorna o objeto completo do usuario
-    }
-
     // Esperar tantos segundos
     esperar(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -1064,4 +1416,4 @@ class Sistema {
 
 // Iniciar sistema
 const FLuxoHotel = new Sistema();
-FLuxoHotel.iniciar();
+await FLuxoHotel.iniciar();
