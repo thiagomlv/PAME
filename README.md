@@ -58,7 +58,7 @@ De modo que o package.json seja semelhante a
 - **BDConfig.js**: Contém a classe BDManager, que cuida de armazenar os dados do sistema em arquivos csv.
 - **funcoesAuxiliares.js**: Contém definições de classes auxiliares, com métodos estáticos, para serem usados principalmente na classe Sistema.
 
-## Features implementadas até o momento:
+## Features implementadas até o momento
 
 - Sistema de cadastro do usuário, com persistencia das informações em banco de dados local, em arquivo .cvs
 - Sistema de Login, com verificação real à base de dados, de usuários
