@@ -76,7 +76,7 @@ export class Cabecalho {
         console.log('='.repeat(50) + '\n');
     }
 
-    static areaFuncionario(nome) {
+    static areaUsuario(nome) {
         
         console.log('\n' + '='.repeat(50));
         console.log(this.ajustarEsquerda(`Bem vindo ao F-luxo Hotel, ${nome.split(' ')[0]}`));
@@ -165,16 +165,36 @@ export class Formatar {
             .replace(/(\d{3})(\d)/, '$1.$2') // Adiciona o segundo ponto
             .replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Adiciona o hífen
     }
-        
+
+    static nomeQuarto(nome) {
+        nome = nome.charAt(0).toUpperCase() + nome.slice(1);
+        return nome.replace(/^(.)(.)/, '$1-$2');
+    }
+}
+
+export class ValidarQuarto {
+    static nome(nome) {
+        // Verifica se o input tem exatamente 4 caracteres
+        if (nome.length !== 4) {
+            return false;
+        }
+
+        // Verifica se o primeiro caractere é uma letra e os três últimos são números
+        if (/^[A-Za-z]/.test(nome[0]) && /^\d{3}$/.test(nome.slice(1))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 export class ID {
-    static gerar(prefixo, id_list) {
+    static gerar(prefixo, idsList) {
         let numeroAleatorio;
         do {
             numeroAleatorio = Math.random().toFixed(4).substring(2);
         }
-        while ( id_list.includes(numeroAleatorio) )
+        while ( idsList.includes(numeroAleatorio) )
         return `${prefixo}${numeroAleatorio}`;
     }
 }

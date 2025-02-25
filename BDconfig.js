@@ -12,7 +12,7 @@ export class BDManager {
 
         return new Promise((resolve, reject) => {
             let tabela = [];
-            const caminho = `./banco_de_dados${origem}.csv`;
+            const caminho = `./banco_de_dados/${origem}.csv`;
             
             // Se o arquivo não existir, o cria
             if (!fs.existsSync(caminho)) {
@@ -37,7 +37,7 @@ export class BDManager {
     static async publicarTabela(destino, tabela) {
 
         // Caminho do arquivo csv
-        const caminho = `./banco_de_dados${destino}.csv`
+        const caminho = `./banco_de_dados/${destino}.csv`
 
         // Configura o escritor CSV
         const csvWriter = this.obterCsvWriter(destino, caminho);
@@ -57,51 +57,9 @@ export class BDManager {
         }
     }
 
-    static async publicarDado(destino, dados) {
+    static async publicarDado(destino, objeto) {
     
-        let tabela = []; 
-        let objeto;
-    
-        // Pega a versao mais recente do banco de dados
-        tabela = await this.obterTabela(destino);
-    
-        // Instancia o objeto que o destino requer
-        switch (destino) {
-            case 'funcionarios':
-                objeto = new Funcionario(
-                    dados.id, 
-                    dados.nome, 
-                    dados.usuario, 
-                    dados.cpf, 
-                    dados.email, 
-                    dados.senha);
-                break;
-            case 'clientes':
-                objeto = new Cliente(
-                    dados.id, 
-                    dados.nome, 
-                    dados.nascimento, 
-                    dados.cpf, 
-                    dados.email, 
-                    dados.senha);
-                break;
-            case 'quartos':
-                objeto = new Quarto(
-                    dados.id, 
-                    dados.nome, 
-                    dados.camas, 
-                    dados.preco, 
-                    dados.descricao);
-                break;
-            case 'reservas':
-                objeto = new Reserva(
-                    dados.id, 
-                    dados.id_cliente, 
-                    dados.status, 
-                    dados.entrada, 
-                    dados.saida);
-                break;
-        }
+        let tabela = await this.obterTabela(destino);
     
         // Adiciona o objeto instanciado no banco de dados local
         tabela.push(objeto);
@@ -118,7 +76,7 @@ export class BDManager {
     static async atualizarObjeto(tabela, obj) {
         // Ler o arquivo CSV
         const records = [];
-        fs.createReadStream(`./banco_de_dados${tabela}.csv`)
+        fs.createReadStream(`./banco_de_dados//${tabela}.csv`)
             .pipe(csvParser())
             .on('data', (linha) => records.push(linha))
             .on('end', async () => {
@@ -137,7 +95,7 @@ export class BDManager {
                     const csvString = header + csvStringifier.stringifyRecords(records);
     
                     // Escrever o arquivo CSV novamente
-                    fs.writeFileSync(`./banco_de_dados${tabela}.csv`, csvString, 'utf8');
+                    fs.writeFileSync(`./banco_de_dados/${tabela}.csv`, csvString, 'utf8');
                 } else {
                 }
             });
@@ -147,7 +105,7 @@ export class BDManager {
         // Configura o escritor CSV 
         if (tabela === 'funcionarios') {
             return createCsvWriter({
-                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados/${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },             // Coluna "ID"
                     { id: 'nome', title: 'nome' },         // Coluna "nome"
@@ -160,7 +118,7 @@ export class BDManager {
         }
         else if (tabela === 'clientes') 
             return createCsvWriter({
-                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados/${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                   // Coluna "ID"
                     { id: 'nome', title: 'nome' },               // Coluna "nome"
@@ -172,7 +130,7 @@ export class BDManager {
             });
         else if (tabela === 'quartos') 
             return createCsvWriter({
-                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados/${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                     // Coluna "id"
                     { id: 'nome', title: 'nome' },                 // Coluna "nome"
@@ -183,7 +141,7 @@ export class BDManager {
             });
         else if (tabela === 'reservas') 
             return createCsvWriter({
-                path: `./banco_de_dados${tabela}.csv`, // Nome do arquivo de saída
+                path: `./banco_de_dados/${tabela}.csv`, // Nome do arquivo de saída
                 header: [
                     { id: 'id', title: 'id' },                  // Coluna "id"
                     { id: 'id_cliente', title: 'idCliente' },   // Coluna "idCliente"
