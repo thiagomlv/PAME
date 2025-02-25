@@ -21,6 +21,23 @@ Verifique a instalação com
 
     npm ls
 
+Certifique-se de incluir a seguinte linha no seu package.json:
+
+    "type": "module"
+
+De modo que o package.json seja semelhante a
+
+    {
+        "type": "module",
+        "dependencies": {
+            "csv-parser": "^3.2.0",
+            "csv-writer": "^1.6.0",
+            "enquirer": "^2.4.1",
+            "inquirer": "^12.4.2"
+        }
+    }
+
+
 ## Estrutura do diretório
 
 ```
