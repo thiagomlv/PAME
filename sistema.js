@@ -1324,7 +1324,7 @@ class Sistema {
         while (true) {
             try {
                 let tabela = await this.obterTabela('Reserva'); // Pega a tabela de reservas
-                
+            
                 console.clear();// Limpar o terminal
                 await Cabecalho.exibirReservas(tabela);
                 
@@ -1334,7 +1334,7 @@ class Sistema {
                     opcoes.push(tabela[i].id);
                 }
     
-                if (opcoes.length !== 0) {
+                if (opcoes.length !== 0 && Object.keys(tabela[0]).length > 0) {
                     // Exibe a pergunta no terminal e coleta a resposta
                     const answers = await inquirer.prompt([
                         {

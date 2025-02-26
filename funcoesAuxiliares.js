@@ -92,7 +92,7 @@ export class Cabecalho {
     static exibirQuartos(listaDeQuartos) {
         this.exibir('Lista de quartos');
 
-        if (listaDeQuartos.length !== 0) {
+        if (listaDeQuartos.length !== 0 && Object.keys(listaDeQuartos[0]).length > 0) {
             for (let i=0; i<listaDeQuartos.length; i++) {
                 console.log(`Quarto: ${listaDeQuartos[i].nome}`);
                 console.log(`Quantidade de camas: ${listaDeQuartos[i].camas}`);
@@ -110,7 +110,7 @@ export class Cabecalho {
     static exibirClientes(listaDeClientes) {
         this.exibir('Lista de clientes');
         
-        if (listaDeClientes.length !== 0) {
+        if (listaDeClientes.length !== 0 && Object.keys(listaDeClientes[0]).length > 0) {
             for (let i=0; i<listaDeClientes.length; i++) {
                 console.log(`Nome: ${listaDeClientes[i].nome}`);
                 console.log(`CPF: ${Formatar.cpf(listaDeClientes[i].cpf)}`);
@@ -128,7 +128,7 @@ export class Cabecalho {
     static async exibirReservas(listaDeReservas) {
         this.exibir('Lista de reservas');
 
-        if (listaDeReservas.length !== 0) {
+        if (listaDeReservas.length !== 0 && Object.keys(listaDeReservas[0]).length > 0) {
             for (let i=0; i<listaDeReservas.length; i++) {
                 // Verifica se a reserva esta cancelada
                 if (listaDeReservas[i].status === 'Cancelada') continue;
