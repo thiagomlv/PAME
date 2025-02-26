@@ -81,7 +81,7 @@ export class Cabecalho {
     static areaUsuario(nome) {
         
         console.log('\n' + '='.repeat(70));
-        console.log(this.ajustarEsquerda(`Bem vindo ao F-luxo Hotel, ${nome.split(' ')[0]}`));
+        console.log(this.ajustarEsquerda(`Bem vindo ao Hotel F-Luxo, ${nome.split(' ')[0]}`));
         console.log('='.repeat(70) + '\n');
     }
 
